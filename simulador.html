@@ -1,788 +1,921 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <title>Simulador: Construye un átomo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    :root {
-      --bg: #0b1020;
-      --panel: #141a33;
-      --accent: #f3b340;
-      --accent-soft: #f3b34033;
-      --text: #f9fafb;
-      --muted: #9ca3af;
-      --danger: #f97373;
-      --success: #4ade80;
-      --radius-lg: 18px;
-      --radius-md: 12px;
-      --shadow-soft: 0 18px 40px rgba(0,0,0,0.45);
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <title>Simulador: Construye un átomo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      :root {
+        --bg: #0b1020;
+        --panel: #141a33;
+        --accent: #f3b340;
+        --accent-soft: #f3b34033;
+        --text: #f9fafb;
+        --muted: #9ca3af;
+        --danger: #f97373;
+        --success: #4ade80;
+        --radius-lg: 18px;
+        --radius-md: 12px;
+        --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.45);
+      }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-        Roboto, sans-serif;
-    }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, sans-serif;
+      }
 
-    body {
-      background: radial-gradient(circle at top, #1e293b 0, #020617 55%);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 16px;
-    }
+      body {
+        background: radial-gradient(circle at top, #1e293b 0, #020617 55%);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 16px;
+      }
 
-    h1 {
-      font-size: clamp(1.6rem, 2vw + 1rem, 2.1rem);
-      margin-bottom: 0.3rem;
-      text-align: center;
-    }
+      h1 {
+        font-size: clamp(1.6rem, 2vw + 1rem, 2.1rem);
+        margin-bottom: 0.3rem;
+        text-align: center;
+      }
 
-    .subtitle {
-      font-size: 0.9rem;
-      color: var(--muted);
-      text-align: center;
-      margin-bottom: 1.2rem;
-    }
+      .subtitle {
+        font-size: 0.9rem;
+        color: var(--muted);
+        text-align: center;
+        margin-bottom: 1.2rem;
+      }
 
-    .app-shell {
-      width: 100%;
-      max-width: 1100px;
-      background: linear-gradient(135deg, #0b1020, #020617);
-      border-radius: 24px;
-      box-shadow: var(--shadow-soft);
-      padding: 16px;
-      display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
-      gap: 16px;
-    }
-
-    @media (max-width: 900px) {
       .app-shell {
-        grid-template-columns: 1fr;
+        width: 100%;
+        max-width: 1100px;
+        background: linear-gradient(135deg, #0b1020, #020617);
+        border-radius: 24px;
+        box-shadow: var(--shadow-soft);
+        padding: 16px;
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+        gap: 16px;
       }
-    }
 
-    .panel {
-      background: var(--panel);
-      border-radius: var(--radius-lg);
-      padding: 16px 18px;
-      border: 1px solid #1f2937;
-      position: relative;
-      overflow: hidden;
-    }
+      @media (max-width: 900px) {
+        .app-shell {
+          grid-template-columns: 1fr;
+        }
+      }
 
-    .panel::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at top right, #facc1533 0, transparent 55%);
-      opacity: 0.8;
-      pointer-events: none;
-    }
+      .panel {
+        background: var(--panel);
+        border-radius: var(--radius-lg);
+        padding: 16px 18px;
+        border: 1px solid #1f2937;
+        position: relative;
+        overflow: hidden;
+      }
 
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 12px;
-      gap: 8px;
-      position: relative;
-      z-index: 1;
-    }
+      .panel::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at top right,
+          #facc1533 0,
+          transparent 55%
+        );
+        opacity: 0.8;
+        pointer-events: none;
+      }
 
-    .panel-title {
-      font-size: 1.05rem;
-      font-weight: 600;
-      letter-spacing: 0.03em;
-    }
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 12px;
+        gap: 8px;
+        position: relative;
+        z-index: 1;
+      }
 
-    .panel-tag {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      padding: 2px 8px;
-      border-radius: 999px;
-      border: 1px solid var(--accent-soft);
-      color: var(--accent);
-      background: #020617aa;
-      white-space: nowrap;
-    }
+      .panel-title {
+        font-size: 1.05rem;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+      }
 
-    .controls-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 12px;
-      margin-bottom: 12px;
-      position: relative;
-      z-index: 1;
-    }
+      .panel-tag {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--accent-soft);
+        color: var(--accent);
+        background: #020617aa;
+        white-space: nowrap;
+      }
 
-    .control-card {
-      background: #020617aa;
-      border-radius: var(--radius-md);
-      border: 1px solid #1f2937;
-      padding: 10px 12px;
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      align-items: center;
-      column-gap: 8px;
-      row-gap: 6px;
-    }
+      .controls-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        margin-bottom: 12px;
+        position: relative;
+        z-index: 1;
+      }
 
-    .control-label {
-      font-size: 0.8rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      grid-column: 1 / -1;
-    }
+      .control-card {
+        background: #020617aa;
+        border-radius: var(--radius-md);
+        border: 1px solid #1f2937;
+        padding: 10px 12px;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        column-gap: 8px;
+        row-gap: 6px;
+      }
 
-    .particle-name {
-      font-weight: 600;
-      font-size: 1rem;
-    }
+      .control-label {
+        font-size: 0.8rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        grid-column: 1 / -1;
+      }
 
-    .particle-symbol {
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
+      .particle-name {
+        font-weight: 600;
+        font-size: 1rem;
+      }
 
-    .counter {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      justify-self: center;
-    }
+      .particle-symbol {
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
 
-    .counter button {
-      width: 28px;
-      height: 28px;
-      border-radius: 999px;
-      border: none;
-      cursor: pointer;
-      font-weight: 700;
-      background: #020617;
-      color: var(--accent);
-      box-shadow: 0 0 0 1px #1f2937;
-      transition: transform 0.08s ease, box-shadow 0.08s ease,
-        background 0.08s ease;
-    }
+      .counter {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        justify-self: center;
+      }
 
-    .counter button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 0 0 1px var(--accent-soft);
-      background: #111827;
-    }
+      .counter button {
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
+        font-weight: 700;
+        background: #020617;
+        color: var(--accent);
+        box-shadow: 0 0 0 1px #1f2937;
+        transition: transform 0.08s ease, box-shadow 0.08s ease,
+          background 0.08s ease;
+      }
 
-    .counter span {
-      min-width: 30px;
-      text-align: center;
-      font-weight: 600;
-      font-size: 1rem;
-    }
+      .counter button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 0 0 1px var(--accent-soft);
+        background: #111827;
+      }
 
-    .info-pill {
-      justify-self: end;
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
+      .counter span {
+        min-width: 30px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 1rem;
+      }
 
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 4px;
-      position: relative;
-      z-index: 1;
-    }
+      .info-pill {
+        justify-self: end;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
 
-    button.primary,
-    button.secondary {
-      border-radius: 999px;
-      border: none;
-      padding: 6px 14px;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.16em;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
-    }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 4px;
+        position: relative;
+        z-index: 1;
+      }
 
-    button.primary {
-      background: var(--accent);
-      color: #18181b;
-      box-shadow: 0 12px 24px #fbbf2480;
-    }
+      button.primary,
+      button.secondary {
+        border-radius: 999px;
+        border: none;
+        padding: 6px 14px;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+      }
 
-    button.secondary {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid #374151;
-    }
+      button.primary {
+        background: var(--accent);
+        color: #18181b;
+        box-shadow: 0 12px 24px #fbbf2480;
+      }
 
-    button.primary:hover {
-      filter: brightness(1.05);
-    }
+      button.secondary {
+        background: transparent;
+        color: var(--text);
+        border: 1px solid #374151;
+      }
 
-    button.secondary:hover {
-      background: #020617;
-    }
+      button.primary:hover {
+        filter: brightness(1.05);
+      }
 
-    .helper {
-      font-size: 0.75rem;
-      color: var(--muted);
-    }
+      button.secondary:hover {
+        background: #020617;
+      }
 
-    /* PANEL DERECHO: datos + diagrama */
+      .helper {
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
 
-    .atom-layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr);
-      gap: 12px;
-      position: relative;
-      z-index: 1;
-    }
+      /* PANEL DERECHO: datos + diagrama */
 
-    @media (max-width: 900px) {
       .atom-layout {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr);
+        gap: 12px;
+        position: relative;
+        z-index: 1;
       }
-    }
 
-    .data-card {
-      background: #020617aa;
-      border-radius: var(--radius-md);
-      border: 1px solid #1f2937;
-      padding: 10px 12px;
-      display: grid;
-      gap: 6px;
-      align-content: start;
-    }
+      @media (max-width: 900px) {
+        .atom-layout {
+          grid-template-columns: 1fr;
+        }
+      }
 
-    .element-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 6px;
-    }
+      .data-card {
+        background: #020617aa;
+        border-radius: var(--radius-md);
+        border: 1px solid #1f2937;
+        padding: 10px 12px;
+        display: grid;
+        gap: 6px;
+        align-content: start;
+      }
 
-    .symbol-big {
-      font-size: 2.3rem;
-      font-weight: 700;
-      line-height: 1;
-    }
+      .element-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 6px;
+      }
 
-    .element-name {
-      font-size: 0.9rem;
-      color: var(--muted);
-    }
+      .symbol-big {
+        font-size: 2.3rem;
+        font-weight: 700;
+        line-height: 1;
+      }
 
-    .detail-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
+      .element-name {
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
 
-    .detail-row span.value {
-      color: var(--text);
-      font-weight: 600;
-    }
+      .detail-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
 
-    .status-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 3px 10px;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      border: 1px solid #374151;
-      background: #020617;
-      margin-top: 4px;
-      width: fit-content;
-    }
+      .detail-row span.value {
+        color: var(--text);
+        font-weight: 600;
+      }
 
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-    }
+      .status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        border: 1px solid #374151;
+        background: #020617;
+        margin-top: 4px;
+        width: fit-content;
+      }
 
-    .status-dot.neutral {
-      background: var(--accent);
-    }
+      .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+      }
 
-    .status-dot.positive {
-      background: var(--danger);
-    }
+      .status-dot.neutral {
+        background: var(--accent);
+      }
 
-    .status-dot.negative {
-      background: var(--success);
-    }
+      .status-dot.positive {
+        background: var(--danger);
+      }
 
-    .diagram-card {
-      background: #020617aa;
-      border-radius: var(--radius-md);
-      border: 1px solid #1f2937;
-      padding: 8px;
-    }
+      .status-dot.negative {
+        background: var(--success);
+      }
 
-    .diagram-title {
-      font-size: 0.8rem;
-      color: var(--muted);
-      margin-bottom: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-    }
+      .diagram-card {
+        background: #020617aa;
+        border-radius: var(--radius-md);
+        border: 1px solid #1f2937;
+        padding: 8px;
+      }
 
-    svg {
-      width: 100%;
-      max-width: 320px;
-      aspect-ratio: 1 / 1;
-      display: block;
-      margin: 0 auto;
-    }
+      .diagram-title {
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+      }
 
-    .footer-note {
-      margin-top: 10px;
-      font-size: 0.75rem;
-      color: var(--muted);
-      text-align: right;
-    }
-  </style>
-</head>
-<body>
-  <h1>Simulador – Construye un átomo</h1>
-  <p class="subtitle">
-    Ajusta el número de protones, neutrones y electrones. Observa cómo cambian el elemento,
-    el número másico, la carga y el diagrama tipo Bohr.
-  </p>
+      svg {
+        width: 100%;
+        max-width: 320px;
+        aspect-ratio: 1 / 1;
+        display: block;
+        margin: 0 auto;
+      }
 
-  <div class="app-shell">
-    <!-- Panel izquierdo: controles -->
-    <div class="panel">
-      <div class="panel-header">
-        <div class="panel-title">Controles de partículas</div>
-        <div class="panel-tag">núcleo y nube electrónica</div>
-      </div>
+      .footer-note {
+        margin-top: 10px;
+        font-size: 0.75rem;
+        color: var(--muted);
+        text-align: right;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Simulador – Construye un átomo</h1>
+    <p class="subtitle">
+      Ajusta el número de protones, neutrones y electrones. Observa cómo cambian
+      el elemento, el número másico, la carga y el diagrama tipo Bohr.
+    </p>
 
-      <div class="controls-grid">
-        <!-- Protones -->
-        <div class="control-card">
-          <div class="control-label">protones</div>
-          <div>
-            <div class="particle-name">Protones <span class="particle-symbol">(p⁺)</span></div>
-          </div>
-          <div class="counter">
-            <button id="dec-p">−</button>
-            <span id="val-p">1</span>
-            <button id="inc-p">+</button>
-          </div>
-          <div class="info-pill" id="info-z">Z = 1</div>
+    <div class="app-shell">
+      <!-- Panel izquierdo: controles -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Controles de partículas</div>
+          <div class="panel-tag">núcleo y nube electrónica</div>
         </div>
 
-        <!-- Neutrones -->
-        <div class="control-card">
-          <div class="control-label">neutrones</div>
-          <div>
-            <div class="particle-name">Neutrones <span class="particle-symbol">(n⁰)</span></div>
-          </div>
-          <div class="counter">
-            <button id="dec-n">−</button>
-            <span id="val-n">0</span>
-            <button id="inc-n">+</button>
-          </div>
-          <div class="info-pill" id="info-a">A = 1</div>
-        </div>
-
-        <!-- Electrones -->
-        <div class="control-card">
-          <div class="control-label">electrones</div>
-          <div>
-            <div class="particle-name">Electrones <span class="particle-symbol">(e⁻)</span></div>
-          </div>
-          <div class="counter">
-            <button id="dec-e">−</button>
-            <span id="val-e">1</span>
-            <button id="inc-e">+</button>
-          </div>
-          <div class="info-pill" id="info-q">carga 0</div>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button class="primary" id="reset-btn">Reset</button>
-        <button class="secondary" id="btn-h">H (1p⁺, 0n, 1e⁻)</button>
-        <button class="secondary" id="btn-he">He (2p⁺, 2n, 2e⁻)</button>
-        <button class="secondary" id="btn-o">O neutro (8p⁺, 8n, 8e⁻)</button>
-      </div>
-      <p class="helper">
-        Consejo: prueba quitar o añadir electrones manteniendo los protones fijos para ver cómo cambian los iones.
-      </p>
-    </div>
-
-    <!-- Panel derecho: información y diagrama -->
-    <div class="panel">
-      <div class="panel-header">
-        <div class="panel-title">Estado del átomo</div>
-        <div class="panel-tag">representación y datos</div>
-      </div>
-
-      <div class="atom-layout">
-        <!-- Datos -->
-        <div class="data-card">
-          <div class="element-header">
+        <div class="controls-grid">
+          <!-- Protones -->
+          <div class="control-card">
+            <div class="control-label">protones</div>
             <div>
-              <div class="symbol-big" id="el-symbol">H</div>
-              <div class="element-name" id="el-name">Hidrógeno</div>
+              <div class="particle-name">
+                Protones <span class="particle-symbol">(p⁺)</span>
+              </div>
             </div>
-            <div style="text-align:right;font-size:0.8rem;color:var(--muted);">
-              <div>Z = <span class="value" id="el-z">1</span></div>
-              <div>A = <span class="value" id="el-a">1</span></div>
+            <div class="counter">
+              <button id="dec-p">−</button>
+              <span id="val-p">1</span>
+              <button id="inc-p">+</button>
             </div>
+            <div class="info-pill" id="info-z">Z = 1</div>
           </div>
 
-          <div class="detail-row">
-            <span>Protones (p⁺)</span>
-            <span class="value" id="detail-p">1</span>
-          </div>
-          <div class="detail-row">
-            <span>Neutrones (n⁰)</span>
-            <span class="value" id="detail-n">0</span>
-          </div>
-          <div class="detail-row">
-            <span>Electrones (e⁻)</span>
-            <span class="value" id="detail-e">1</span>
-          </div>
-          <div class="detail-row">
-            <span>Carga neta</span>
-            <span class="value" id="detail-q">0 (neutral)</span>
-          </div>
-          <div class="detail-row">
-            <span>Configuración por capas (máx. 2, 8, 8, 18…)</span>
-            <span class="value" id="detail-shells">K:1</span>
+          <!-- Neutrones -->
+          <div class="control-card">
+            <div class="control-label">neutrones</div>
+            <div>
+              <div class="particle-name">
+                Neutrones <span class="particle-symbol">(n⁰)</span>
+              </div>
+            </div>
+            <div class="counter">
+              <button id="dec-n">−</button>
+              <span id="val-n">0</span>
+              <button id="inc-n">+</button>
+            </div>
+            <div class="info-pill" id="info-a">A = 1</div>
           </div>
 
-          <div class="status-chip" id="status-chip">
-            <span class="status-dot neutral" id="status-dot"></span>
-            <span id="status-text">Átomo neutro</span>
+          <!-- Electrones -->
+          <div class="control-card">
+            <div class="control-label">electrones</div>
+            <div>
+              <div class="particle-name">
+                Electrones <span class="particle-symbol">(e⁻)</span>
+              </div>
+            </div>
+            <div class="counter">
+              <button id="dec-e">−</button>
+              <span id="val-e">1</span>
+              <button id="inc-e">+</button>
+            </div>
+            <div class="info-pill" id="info-q">carga 0</div>
           </div>
         </div>
 
-        <!-- Diagrama -->
-        <div class="diagram-card">
-          <div class="diagram-title">Diagrama tipo Bohr (no a escala real)</div>
-          <svg id="atom-svg" viewBox="0 0 300 300">
-            <!-- Se dibuja dinámicamente con JS -->
-          </svg>
+        <div class="actions">
+          <button class="primary" id="reset-btn">Reset</button>
+          <button class="secondary" id="btn-h">H (1p⁺, 0n, 1e⁻)</button>
+          <button class="secondary" id="btn-he">He (2p⁺, 2n, 2e⁻)</button>
+          <button class="secondary" id="btn-o">O neutro (8p⁺, 8n, 8e⁻)</button>
         </div>
+        <p class="helper">
+          Consejo: prueba quitar o añadir electrones manteniendo los protones
+          fijos para ver cómo cambian los iones.
+        </p>
       </div>
 
-      <div class="footer-note">
-        Modelo simplificado para fines didácticos. No representa la mecánica cuántica real.
+      <!-- Panel derecho: información y diagrama -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Estado del átomo</div>
+          <div class="panel-tag">representación y datos</div>
+        </div>
+
+        <div class="atom-layout">
+          <!-- Datos -->
+          <div class="data-card">
+            <div class="element-header">
+              <div>
+                <div class="symbol-big" id="el-symbol">H</div>
+                <div class="element-name" id="el-name">Hidrógeno</div>
+              </div>
+              <div
+                style="
+                  text-align: right;
+                  font-size: 0.8rem;
+                  color: var(--muted);
+                "
+              >
+                <div>Z = <span class="value" id="el-z">1</span></div>
+                <div>A = <span class="value" id="el-a">1</span></div>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <span>Protones (p⁺)</span>
+              <span class="value" id="detail-p">1</span>
+            </div>
+            <div class="detail-row">
+              <span>Neutrones (n⁰)</span>
+              <span class="value" id="detail-n">0</span>
+            </div>
+            <div class="detail-row">
+              <span>Electrones (e⁻)</span>
+              <span class="value" id="detail-e">1</span>
+            </div>
+            <div class="detail-row">
+              <span>Carga neta</span>
+              <span class="value" id="detail-q">0 (neutral)</span>
+            </div>
+            <div class="detail-row">
+              <span>Configuración por capas (máx. 2, 8, 8, 18…)</span>
+              <span class="value" id="detail-shells">K:1</span>
+            </div>
+
+            <div class="status-chip" id="status-chip">
+              <span class="status-dot neutral" id="status-dot"></span>
+              <span id="status-text">Átomo neutro</span>
+            </div>
+          </div>
+
+          <!-- Diagrama -->
+          <div class="diagram-card">
+            <div class="diagram-title">
+              Diagrama tipo Bohr (no a escala real)
+            </div>
+            <svg id="atom-svg" viewBox="0 0 300 300">
+              <!-- Se dibuja dinámicamente con JS -->
+            </svg>
+          </div>
+        </div>
+
+        <div class="footer-note">
+          Modelo simplificado para fines didácticos. No representa la mecánica
+          cuántica real.
+        </div>
       </div>
     </div>
-  </div>
 
-  <script>
-    // ===========================
-    // Datos de elementos (Z 1–20)
-    // ===========================
-    const elements = [
-      null,
-      { symbol: "H", name: "Hidrógeno" },
-      { symbol: "He", name: "Helio" },
-      { symbol: "Li", name: "Litio" },
-      { symbol: "Be", name: "Berilio" },
-      { symbol: "B", name: "Boro" },
-      { symbol: "C", name: "Carbono" },
-      { symbol: "N", name: "Nitrógeno" },
-      { symbol: "O", name: "Oxígeno" },
-      { symbol: "F", name: "Flúor" },
-      { symbol: "Ne", name: "Neón" },
-      { symbol: "Na", name: "Sodio" },
-      { symbol: "Mg", name: "Magnesio" },
-      { symbol: "Al", name: "Aluminio" },
-      { symbol: "Si", name: "Silicio" },
-      { symbol: "P", name: "Fósforo" },
-      { symbol: "S", name: "Azufre" },
-      { symbol: "Cl", name: "Cloro" },
-      { symbol: "Ar", name: "Argón" },
-      { symbol: "K", name: "Potasio" },
-      { symbol: "Ca", name: "Calcio" }
-    ];
+    <script>
+      // ===========================
+      // Datos de elementos (Z 1–20)
+      // ===========================
+      const elements = [
+        null,
+        { symbol: "H", name: "Hidrógeno" }, // 1
+        { symbol: "He", name: "Helio" }, // 2
+        { symbol: "Li", name: "Litio" }, // 3
+        { symbol: "Be", name: "Berilio" }, // 4
+        { symbol: "B", name: "Boro" }, // 5
+        { symbol: "C", name: "Carbono" }, // 6
+        { symbol: "N", name: "Nitrógeno" }, // 7
+        { symbol: "O", name: "Oxígeno" }, // 8
+        { symbol: "F", name: "Flúor" }, // 9
+        { symbol: "Ne", name: "Neón" }, // 10
+        { symbol: "Na", name: "Sodio" }, // 11
+        { symbol: "Mg", name: "Magnesio" }, // 12
+        { symbol: "Al", name: "Aluminio" }, // 13
+        { symbol: "Si", name: "Silicio" }, // 14
+        { symbol: "P", name: "Fósforo" }, // 15
+        { symbol: "S", name: "Azufre" }, // 16
+        { symbol: "Cl", name: "Cloro" }, // 17
+        { symbol: "Ar", name: "Argón" }, // 18
+        { symbol: "K", name: "Potasio" }, // 19
+        { symbol: "Ca", name: "Calcio" }, // 20
+        { symbol: "Sc", name: "Escandio" }, // 21
+        { symbol: "Ti", name: "Titanio" }, // 22
+        { symbol: "V", name: "Vanadio" }, // 23
+        { symbol: "Cr", name: "Cromo" }, // 24
+        { symbol: "Mn", name: "Manganeso" }, // 25
+        { symbol: "Fe", name: "Hierro" }, // 26
+        { symbol: "Co", name: "Cobalto" }, // 27
+        { symbol: "Ni", name: "Níquel" }, // 28
+        { symbol: "Cu", name: "Cobre" }, // 29
+        { symbol: "Zn", name: "Zinc" }, // 30
+        { symbol: "Ga", name: "Galio" }, // 31
+        { symbol: "Ge", name: "Germanio" }, // 32
+        { symbol: "As", name: "Arsénico" }, // 33
+        { symbol: "Se", name: "Selenio" }, // 34
+        { symbol: "Br", name: "Bromo" }, // 35
+        { symbol: "Kr", name: "Kriptón" }, // 36
+        { symbol: "Rb", name: "Rubidio" }, // 37
+        { symbol: "Sr", name: "Estroncio" }, // 38
+        { symbol: "Y", name: "Itrio" }, // 39
+        { symbol: "Zr", name: "Circonio" }, // 40
+        { symbol: "Nb", name: "Niobio" }, // 41
+        { symbol: "Mo", name: "Molibdeno" }, // 42
+        { symbol: "Tc", name: "Tecnecio" }, // 43
+        { symbol: "Ru", name: "Rutenio" }, // 44
+        { symbol: "Rh", name: "Rodio" }, // 45
+        { symbol: "Pd", name: "Paladio" }, // 46
+        { symbol: "Ag", name: "Plata" }, // 47
+        { symbol: "Cd", name: "Cadmio" }, // 48
+        { symbol: "In", name: "Indio" }, // 49
+        { symbol: "Sn", name: "Estaño" }, // 50
+        { symbol: "Sb", name: "Antimonio" }, // 51
+        { symbol: "Te", name: "Telurio" }, // 52
+        { symbol: "I", name: "Yodo" }, // 53
+        { symbol: "Xe", name: "Xenón" }, // 54
+        { symbol: "Cs", name: "Cesio" }, // 55
+        { symbol: "Ba", name: "Bario" }, // 56
+        { symbol: "La", name: "Lantano" }, // 57
+        { symbol: "Ce", name: "Cerio" }, // 58
+        { symbol: "Pr", name: "Praseodimio" }, // 59
+        { symbol: "Nd", name: "Neodimio" }, // 60
+        { symbol: "Pm", name: "Prometio" }, // 61
+        { symbol: "Sm", name: "Samario" }, // 62
+        { symbol: "Eu", name: "Europio" }, // 63
+        { symbol: "Gd", name: "Gadolinio" }, // 64
+        { symbol: "Tb", name: "Terbio" }, // 65
+        { symbol: "Dy", name: "Disprosio" }, // 66
+        { symbol: "Ho", name: "Holmio" }, // 67
+        { symbol: "Er", name: "Erbio" }, // 68
+        { symbol: "Tm", name: "Tulio" }, // 69
+        { symbol: "Yb", name: "Iterbio" }, // 70
+        { symbol: "Lu", name: "Lutecio" }, // 71
+        { symbol: "Hf", name: "Hafnio" }, // 72
+        { symbol: "Ta", name: "Tántalo" }, // 73
+        { symbol: "W", name: "Wolframio" }, // 74
+        { symbol: "Re", name: "Renio" }, // 75
+        { symbol: "Os", name: "Osmio" }, // 76
+        { symbol: "Ir", name: "Iridio" }, // 77
+        { symbol: "Pt", name: "Platino" }, // 78
+        { symbol: "Au", name: "Oro" }, // 79
+        { symbol: "Hg", name: "Mercurio" }, // 80
+        { symbol: "Tl", name: "Talio" }, // 81
+        { symbol: "Pb", name: "Plomo" }, // 82
+        { symbol: "Bi", name: "Bismuto" }, // 83
+        { symbol: "Po", name: "Polonio" }, // 84
+        { symbol: "At", name: "Astato" }, // 85
+        { symbol: "Rn", name: "Radón" }, // 86
+        { symbol: "Fr", name: "Francio" }, // 87
+        { symbol: "Ra", name: "Radio" }, // 88
+        { symbol: "Ac", name: "Actinio" }, // 89
+        { symbol: "Th", name: "Torio" }, // 90
+        { symbol: "Pa", name: "Protactinio" }, // 91
+        { symbol: "U", name: "Uranio" }, // 92
+        { symbol: "Np", name: "Neptunio" }, // 93
+        { symbol: "Pu", name: "Plutonio" }, // 94
+        { symbol: "Am", name: "Americio" }, // 95
+        { symbol: "Cm", name: "Curio" }, // 96
+        { symbol: "Bk", name: "Berkelio" }, // 97
+        { symbol: "Cf", name: "Californio" }, // 98
+        { symbol: "Es", name: "Einstenio" }, // 99
+        { symbol: "Fm", name: "Fermio" }, // 100
+        { symbol: "Md", name: "Mendelevio" }, // 101
+        { symbol: "No", name: "Nobelio" }, // 102
+        { symbol: "Lr", name: "Lawrencio" }, // 103
+        { symbol: "Rf", name: "Rutherfordio" }, // 104
+        { symbol: "Db", name: "Dubnio" }, // 105
+        { symbol: "Sg", name: "Seaborgio" }, // 106
+        { symbol: "Bh", name: "Bohrio" }, // 107
+        { symbol: "Hs", name: "Hassio" }, // 108
+        { symbol: "Mt", name: "Meitnerio" }, // 109
+        { symbol: "Ds", name: "Darmstadtio" }, // 110
+        { symbol: "Rg", name: "Roentgenio" }, // 111
+        { symbol: "Cn", name: "Copernicio" }, // 112
+        { symbol: "Nh", name: "Nihonio" }, // 113
+        { symbol: "Fl", name: "Flerovio" }, // 114
+        { symbol: "Mc", name: "Moscovio" }, // 115
+        { symbol: "Lv", name: "Livermorio" }, // 116
+        { symbol: "Ts", name: "Tenesino" }, // 117
+        { symbol: "Og", name: "Oganesón" }, // 118
+      ];
 
-    // Estado
-    let p = 1; // protones
-    let n = 0; // neutrones
-    let e = 1; // electrones
+      // Estado
+      let p = 1; // protones
+      let n = 0; // neutrones
+      let e = 1; // electrones
 
-    // Referencias DOM
-    const valP = document.getElementById("val-p");
-    const valN = document.getElementById("val-n");
-    const valE = document.getElementById("val-e");
-    const infoZ = document.getElementById("info-z");
-    const infoA = document.getElementById("info-a");
-    const infoQ = document.getElementById("info-q");
+      // Referencias DOM
+      const valP = document.getElementById("val-p");
+      const valN = document.getElementById("val-n");
+      const valE = document.getElementById("val-e");
+      const infoZ = document.getElementById("info-z");
+      const infoA = document.getElementById("info-a");
+      const infoQ = document.getElementById("info-q");
 
-    const elSymbol = document.getElementById("el-symbol");
-    const elName = document.getElementById("el-name");
-    const elZ = document.getElementById("el-z");
-    const elA = document.getElementById("el-a");
-    const detailP = document.getElementById("detail-p");
-    const detailN = document.getElementById("detail-n");
-    const detailE = document.getElementById("detail-e");
-    const detailQ = document.getElementById("detail-q");
-    const detailShells = document.getElementById("detail-shells");
+      const elSymbol = document.getElementById("el-symbol");
+      const elName = document.getElementById("el-name");
+      const elZ = document.getElementById("el-z");
+      const elA = document.getElementById("el-a");
+      const detailP = document.getElementById("detail-p");
+      const detailN = document.getElementById("detail-n");
+      const detailE = document.getElementById("detail-e");
+      const detailQ = document.getElementById("detail-q");
+      const detailShells = document.getElementById("detail-shells");
 
-    const statusChip = document.getElementById("status-chip");
-    const statusDot = document.getElementById("status-dot");
-    const statusText = document.getElementById("status-text");
+      const statusChip = document.getElementById("status-chip");
+      const statusDot = document.getElementById("status-dot");
+      const statusText = document.getElementById("status-text");
 
-    const svg = document.getElementById("atom-svg");
+      const svg = document.getElementById("atom-svg");
 
-    // ===========================
-    // Lógica principal de estado
-    // ===========================
-    function clamp(x, min, max) {
-      return Math.max(min, Math.min(max, x));
-    }
-
-    function distributeElectrons(electrons) {
-      // Capacidad aproximada de las primeras capas K,L,M,N...
-      const capacities = [2, 8, 8, 18, 18];
-      const shells = [];
-      let remaining = electrons;
-      for (let cap of capacities) {
-        const used = Math.min(cap, remaining);
-        shells.push(used);
-        remaining -= used;
-        if (remaining <= 0) break;
+      // ===========================
+      // Lógica principal de estado
+      // ===========================
+      function clamp(x, min, max) {
+        return Math.max(min, Math.min(max, x));
       }
-      return shells;
-    }
 
-    function updateState() {
-      const Z = p;
-      const A = p + n;
-      const charge = p - e; // positivo si faltan e⁻
-
-      // Texto básico
-      valP.textContent = p;
-      valN.textContent = n;
-      valE.textContent = e;
-      infoZ.textContent = `Z = ${Z}`;
-      infoA.textContent = `A = ${A}`;
-      infoQ.textContent = `carga ${charge}`;
-
-      elZ.textContent = Z;
-      elA.textContent = A;
-      detailP.textContent = p;
-      detailN.textContent = n;
-      detailE.textContent = e;
-
-      // Elemento (si Z conocido)
-      let symbol = "?";
-      let name = "Elemento desconocido";
-      if (Z > 0 && Z < elements.length) {
-        symbol = elements[Z].symbol;
-        name = elements[Z].name;
-      }
-      elSymbol.textContent = symbol;
-      elName.textContent = name;
-
-      // Carga
-      let chargeText = "";
-      let chipText = "";
-      let chipClass = "neutral";
-
-      if (charge === 0) {
-        chargeText = "0 (neutral)";
-        chipText = "Átomo neutro";
-        chipClass = "neutral";
-      } else if (charge > 0) {
-        chargeText = `+${charge} (catión)`;
-        chipText = `Catión de ${symbol}`;
-        chipClass = "positive";
-      } else {
-        chargeText = `${charge} (anión)`;
-        chipText = `Anión de ${symbol}`;
-        chipClass = "negative";
-      }
-      detailQ.textContent = chargeText;
-      statusText.textContent = chipText;
-
-      statusDot.classList.remove("neutral", "positive", "negative");
-      statusDot.classList.add(chipClass);
-
-      // Capas electrónicas
-      const shells = distributeElectrons(e);
-      if (shells.length === 0) {
-        detailShells.textContent = "sin electrones";
-      } else {
-        const labels = ["K", "L", "M", "N", "O"];
-        const parts = shells.map((count, i) => `${labels[i]}:${count}`);
-        detailShells.textContent = parts.join(", ");
+      function distributeElectrons(electrons) {
+        // Capacidad aproximada de las primeras capas K,L,M,N...
+        const capacities = [2, 8, 8, 18, 18];
+        const shells = [];
+        let remaining = electrons;
+        for (let cap of capacities) {
+          const used = Math.min(cap, remaining);
+          shells.push(used);
+          remaining -= used;
+          if (remaining <= 0) break;
+        }
+        return shells;
       }
 
-      // Redibujar diagrama
-      drawAtom(Z, A, charge, shells);
-    }
+      function updateState() {
+        const Z = p;
+        const A = p + n;
+        const charge = p - e; // positivo si faltan e⁻
 
-    // ===========================
-    // Dibujo en SVG
-    // ===========================
-    function drawAtom(Z, A, charge, shells) {
-      const centerX = 150;
-      const centerY = 150;
+        // Texto básico
+        valP.textContent = p;
+        valN.textContent = n;
+        valE.textContent = e;
+        infoZ.textContent = `Z = ${Z}`;
+        infoA.textContent = `A = ${A}`;
+        infoQ.textContent = `carga ${charge}`;
 
-      // Limpiar SVG
-      while (svg.firstChild) {
-        svg.removeChild(svg.firstChild);
+        elZ.textContent = Z;
+        elA.textContent = A;
+        detailP.textContent = p;
+        detailN.textContent = n;
+        detailE.textContent = e;
+
+        // Elemento (si Z conocido)
+        let symbol = "?";
+        let name = "Elemento desconocido";
+        if (Z > 0 && Z < elements.length) {
+          symbol = elements[Z].symbol;
+          name = elements[Z].name;
+        }
+        elSymbol.textContent = symbol;
+        elName.textContent = name;
+
+        // Carga
+        let chargeText = "";
+        let chipText = "";
+        let chipClass = "neutral";
+
+        if (charge === 0) {
+          chargeText = "0 (neutral)";
+          chipText = "Átomo neutro";
+          chipClass = "neutral";
+        } else if (charge > 0) {
+          chargeText = `+${charge} (catión)`;
+          chipText = `Catión de ${symbol}`;
+          chipClass = "positive";
+        } else {
+          chargeText = `${charge} (anión)`;
+          chipText = `Anión de ${symbol}`;
+          chipClass = "negative";
+        }
+        detailQ.textContent = chargeText;
+        statusText.textContent = chipText;
+
+        statusDot.classList.remove("neutral", "positive", "negative");
+        statusDot.classList.add(chipClass);
+
+        // Capas electrónicas
+        const shells = distributeElectrons(e);
+        if (shells.length === 0) {
+          detailShells.textContent = "sin electrones";
+        } else {
+          const labels = ["K", "L", "M", "N", "O"];
+          const parts = shells.map((count, i) => `${labels[i]}:${count}`);
+          detailShells.textContent = parts.join(", ");
+        }
+
+        // Redibujar diagrama
+        drawAtom(Z, A, charge, shells);
       }
 
-      // Fondo suave
-      const bg = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      bg.setAttribute("cx", centerX);
-      bg.setAttribute("cy", centerY);
-      bg.setAttribute("r", 145);
-      bg.setAttribute("fill", "#020617");
-      svg.appendChild(bg);
+      // ===========================
+      // Dibujo en SVG
+      // ===========================
+      function drawAtom(Z, A, charge, shells) {
+        const centerX = 150;
+        const centerY = 150;
 
-      // Nucleo
-      const nucleusRadius = 22 + Math.min(A, 40) * 0.4;
-      const nucleus = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      nucleus.setAttribute("cx", centerX);
-      nucleus.setAttribute("cy", centerY);
-      nucleus.setAttribute("r", nucleusRadius);
-      nucleus.setAttribute("fill", "#fbbf24");
-      nucleus.setAttribute("fill-opacity", "0.9");
-      nucleus.setAttribute("stroke", "#fef3c7");
-      nucleus.setAttribute("stroke-width", "2");
-      svg.appendChild(nucleus);
+        // Limpiar SVG
+        while (svg.firstChild) {
+          svg.removeChild(svg.firstChild);
+        }
 
-      // Texto dentro del núcleo (Z y A)
-      const textZ = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      textZ.setAttribute("x", centerX);
-      textZ.setAttribute("y", centerY - 4);
-      textZ.setAttribute("text-anchor", "middle");
-      textZ.setAttribute("fill", "#111827");
-      textZ.setAttribute("font-size", "18");
-      textZ.setAttribute("font-weight", "700");
-      textZ.textContent = `Z=${Z}`;
-      svg.appendChild(textZ);
+        // Fondo suave
+        const bg = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "circle"
+        );
+        bg.setAttribute("cx", centerX);
+        bg.setAttribute("cy", centerY);
+        bg.setAttribute("r", 145);
+        bg.setAttribute("fill", "#020617");
+        svg.appendChild(bg);
 
-      const textA = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      textA.setAttribute("x", centerX);
-      textA.setAttribute("y", centerY + 15);
-      textA.setAttribute("text-anchor", "middle");
-      textA.setAttribute("fill", "#111827");
-      textA.setAttribute("font-size", "13");
-      textA.textContent = `A=${A}`;
-      svg.appendChild(textA);
+        // Nucleo
+        const nucleusRadius = 22 + Math.min(A, 40) * 0.4;
+        const nucleus = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "circle"
+        );
+        nucleus.setAttribute("cx", centerX);
+        nucleus.setAttribute("cy", centerY);
+        nucleus.setAttribute("r", nucleusRadius);
+        nucleus.setAttribute("fill", "#fbbf24");
+        nucleus.setAttribute("fill-opacity", "0.9");
+        nucleus.setAttribute("stroke", "#fef3c7");
+        nucleus.setAttribute("stroke-width", "2");
+        svg.appendChild(nucleus);
 
-      // Capas electrónicas
-      const baseRadius = nucleusRadius + 20;
-      const shellGap = 24;
+        // Texto dentro del núcleo (Z y A)
+        const textZ = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "text"
+        );
+        textZ.setAttribute("x", centerX);
+        textZ.setAttribute("y", centerY - 4);
+        textZ.setAttribute("text-anchor", "middle");
+        textZ.setAttribute("fill", "#111827");
+        textZ.setAttribute("font-size", "18");
+        textZ.setAttribute("font-weight", "700");
+        textZ.textContent = `Z=${Z}`;
+        svg.appendChild(textZ);
 
-      shells.forEach((count, index) => {
-        const r = baseRadius + shellGap * index;
+        const textA = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "text"
+        );
+        textA.setAttribute("x", centerX);
+        textA.setAttribute("y", centerY + 15);
+        textA.setAttribute("text-anchor", "middle");
+        textA.setAttribute("fill", "#111827");
+        textA.setAttribute("font-size", "13");
+        textA.textContent = `A=${A}`;
+        svg.appendChild(textA);
 
-        // Órbita
-        const orbit = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        orbit.setAttribute("cx", centerX);
-        orbit.setAttribute("cy", centerY);
-        orbit.setAttribute("r", r);
-        orbit.setAttribute("fill", "none");
-        orbit.setAttribute("stroke", "#4b5563");
-        orbit.setAttribute("stroke-dasharray", "4 4");
-        orbit.setAttribute("stroke-width", "1.3");
-        svg.appendChild(orbit);
+        // Capas electrónicas
+        const baseRadius = nucleusRadius + 20;
+        const shellGap = 24;
 
-        // Electrones sobre la órbita
-        for (let i = 0; i < count; i++) {
-          const angle = (2 * Math.PI * i) / count;
-          const ex = centerX + r * Math.cos(angle);
-          const ey = centerY + r * Math.sin(angle);
+        shells.forEach((count, index) => {
+          const r = baseRadius + shellGap * index;
 
-          const electron = document.createElementNS(
+          // Órbita
+          const orbit = document.createElementNS(
             "http://www.w3.org/2000/svg",
             "circle"
           );
-          electron.setAttribute("cx", ex);
-          electron.setAttribute("cy", ey);
-          electron.setAttribute("r", 5);
-          electron.setAttribute("fill", "#60a5fa");
-          electron.setAttribute("stroke", "#bfdbfe");
-          electron.setAttribute("stroke-width", "1");
-          svg.appendChild(electron);
-        }
-      });
-    }
+          orbit.setAttribute("cx", centerX);
+          orbit.setAttribute("cy", centerY);
+          orbit.setAttribute("r", r);
+          orbit.setAttribute("fill", "none");
+          orbit.setAttribute("stroke", "#4b5563");
+          orbit.setAttribute("stroke-dasharray", "4 4");
+          orbit.setAttribute("stroke-width", "1.3");
+          svg.appendChild(orbit);
 
-    // ===========================
-    // Eventos de los botones
-    // ===========================
-    function changeP(delta) {
-      p = clamp(p + delta, 0, 30);
-      if (e === 0 && p === 0) e = 0;
-      updateState();
-    }
+          // Electrones sobre la órbita
+          for (let i = 0; i < count; i++) {
+            const angle = (2 * Math.PI * i) / count;
+            const ex = centerX + r * Math.cos(angle);
+            const ey = centerY + r * Math.sin(angle);
 
-    function changeN(delta) {
-      n = clamp(n + delta, 0, 40);
-      updateState();
-    }
+            const electron = document.createElementNS(
+              "http://www.w3.org/2000/svg",
+              "circle"
+            );
+            electron.setAttribute("cx", ex);
+            electron.setAttribute("cy", ey);
+            electron.setAttribute("r", 5);
+            electron.setAttribute("fill", "#60a5fa");
+            electron.setAttribute("stroke", "#bfdbfe");
+            electron.setAttribute("stroke-width", "1");
+            svg.appendChild(electron);
+          }
+        });
+      }
 
-    function changeE(delta) {
-      e = clamp(e + delta, 0, 40);
-      updateState();
-    }
+      // ===========================
+      // Eventos de los botones
+      // ===========================
+      function changeP(delta) {
+        p = clamp(p + delta, 0, 118);
+        if (e === 0 && p === 0) e = 0;
+        updateState();
+      }
 
-    document.getElementById("inc-p").onclick = () => changeP(1);
-    document.getElementById("dec-p").onclick = () => changeP(-1);
-    document.getElementById("inc-n").onclick = () => changeN(1);
-    document.getElementById("dec-n").onclick = () => changeN(-1);
-    document.getElementById("inc-e").onclick = () => changeE(1);
-    document.getElementById("dec-e").onclick = () => changeE(-1);
+      function changeN(delta) {
+        n = clamp(n + delta, 0, 40);
+        updateState();
+      }
 
-    document.getElementById("reset-btn").onclick = () => {
-      p = 1;
-      n = 0;
-      e = 1;
-      updateState();
-    };
+      function changeE(delta) {
+        e = clamp(e + delta, 0, 40);
+        updateState();
+      }
 
-    document.getElementById("btn-h").onclick = () => {
-      p = 1;
-      n = 0;
-      e = 1;
-      updateState();
-    };
-    document.getElementById("btn-he").onclick = () => {
-      p = 2;
-      n = 2;
-      e = 2;
-      updateState();
-    };
-    document.getElementById("btn-o").onclick = () => {
-      p = 8;
-      n = 8;
-      e = 8;
-      updateState();
-    };
+      document.getElementById("inc-p").onclick = () => changeP(1);
+      document.getElementById("dec-p").onclick = () => changeP(-1);
+      document.getElementById("inc-n").onclick = () => changeN(1);
+      document.getElementById("dec-n").onclick = () => changeN(-1);
+      document.getElementById("inc-e").onclick = () => changeE(1);
+      document.getElementById("dec-e").onclick = () => changeE(-1);
 
-    // Inicializar
-    updateState();
-  </script>
-</body>
+      document.getElementById("reset-btn").onclick = () => {
+        p = 1;
+        n = 0;
+        e = 1;
+        updateState();
+      };
+
+      document.getElementById("btn-h").onclick = () => {
+        p = 1;
+        n = 0;
+        e = 1;
+        updateState();
+      };
+      document.getElementById("btn-he").onclick = () => {
+        p = 2;
+        n = 2;
+        e = 2;
+        updateState();
+      };
+      document.getElementById("btn-o").onclick = () => {
+        p = 8;
+        n = 8;
+        e = 8;
+        updateState();
+      };
+
+      // Inicializar
+      updateState();
+    </script>
+  </body>
 </html>
